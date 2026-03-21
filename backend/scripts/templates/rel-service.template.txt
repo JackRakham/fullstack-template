@@ -1,0 +1,116 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { __TargetEntity__ } from '../../__target-folder__/__target-filename__';
+import { __SourceEntity__ } from '../../__source-folder__/__source-filename__';
+import { BusinessError, BusinessLogicException } from 'src/shared/errors/bussines-error';
+import { CacheService, CacheTTL } from 'src/shared/services/cache.service';
+import { PaginatedResponseDto, PaginationDto } from 'src/shared/dtos/pagination.dto';
+import { plainToInstance } from 'class-transformer';
+import { __Target__ResponseDto } from '../../dtos/__target-dto-filename__';
+
+@Injectable()
+export class __Source____Target__sService {
+    private readonly logger = new Logger(__Source____Target__sService.name);
+
+    constructor(
+        @InjectRepository(__TargetEntity__)
+        private readonly __targetCamel__Repository: Repository<__TargetEntity__>,
+
+        @InjectRepository(__SourceEntity__)
+        private readonly __sourceCamel__Repository: Repository<__SourceEntity__>,
+
+        private readonly cacheService: CacheService,
+    ) { }
+
+    async find__Target__sBy__Source__Id(__sourceCamel__Id: number, pagination: PaginationDto): Promise<PaginatedResponseDto<__Target__ResponseDto>> {
+        const { page = 1, page_size = 10 } = pagination;
+        const cacheKey = `__sourceCamel__:${__sourceCamel__Id}:__targetCamel__s:page:${page}:size:${page_size}`;
+
+        const cached = await this.cacheService.get<any>(cacheKey);
+        if (cached) return cached;
+
+        const __sourceCamel__ = await this.__sourceCamel__Repository.findOne({
+            where: { id: __sourceCamel__Id } as any,
+            relations: ['__targetCamel__s'], // Assuming the relation property is plural
+        });
+
+        if (!__sourceCamel__) {
+            throw new BusinessLogicException(`__SourceEntity__ with ID ${__sourceCamel__Id} not found`, BusinessError.NOT_FOUND);
+        }
+
+        const all__Target__s = __sourceCamel__.__targetCamel__s || [];
+        const total = all__Target__s.length;
+        const items = all__Target__s.slice((page - 1) * page_size, page * page_size);
+
+        const transformedItems = plainToInstance(__Target__ResponseDto, items, { excludeExtraneousValues: true });
+        const result = { items: transformedItems, total };
+        await this.cacheService.set(cacheKey, result, CacheTTL.TEN_MINUTES);
+
+        return result;
+    }
+
+    async add__Target__To__Source__(__sourceCamel__Id: number, __targetCamel__Id: number): Promise<void> {
+        const __sourceCamel__ = await this.__sourceCamel__Repository.findOne({
+            where: { id: __sourceCamel__Id } as any,
+            relations: ['__targetCamel__s'],
+        });
+        if (!__sourceCamel__) {
+            throw new BusinessLogicException(`__SourceEntity__ with ID ${__sourceCamel__Id} not found`, BusinessError.NOT_FOUND);
+        }
+
+        const __targetCamel__ = await this.__targetCamel__Repository.findOne({ where: { id: __targetCamel__Id } as any });
+        if (!__targetCamel__) {
+            throw new BusinessLogicException(`__TargetEntity__ with ID ${__targetCamel__Id} not found`, BusinessError.NOT_FOUND);
+        }
+
+        const alreadyHas = __sourceCamel__.__targetCamel__s.some(t => t.id === __targetCamel__Id);
+        if (alreadyHas) return;
+
+        __sourceCamel__.__targetCamel__s.push(__targetCamel__);
+        await this.__sourceCamel__Repository.save(__sourceCamel__);
+
+        this.logger.log(`✅ __TargetEntity__ ${__targetCamel__Id} added to __SourceEntity__ ${__sourceCamel__Id}`);
+        await this.invalidateCache(__sourceCamel__Id);
+    }
+
+    async associate__Target__sTo__Source__(__sourceCamel__Id: number, __targetCamel__Ids: number[]): Promise<void> {
+        const __sourceCamel__ = await this.__sourceCamel__Repository.findOne({
+            where: { id: __sourceCamel__Id } as any,
+        });
+        if (!__sourceCamel__) {
+            throw new BusinessLogicException(`__SourceEntity__ with ID ${__sourceCamel__Id} not found`, BusinessError.NOT_FOUND);
+        }
+
+        const __targetCamel__s = await this.__targetCamel__Repository.findBy({ id: In(__targetCamel__Ids) } as any);
+        if (__targetCamel__s.length !== __targetCamel__Ids.length) {
+            throw new BusinessLogicException(`Some __targetCamel__s were not found`, BusinessError.NOT_FOUND);
+        }
+
+        __sourceCamel__.__targetCamel__s = __targetCamel__s;
+        await this.__sourceCamel__Repository.save(__sourceCamel__);
+
+        this.logger.log(`✅ Associated ${__targetCamel__Ids.length} __targetCamel__s to __SourceEntity__ ${__sourceCamel__Id}`);
+        await this.invalidateCache(__sourceCamel__Id);
+    }
+
+    async remove__Target__From__Source__(__sourceCamel__Id: number, __targetCamel__Id: number): Promise<void> {
+        const __sourceCamel__ = await this.__sourceCamel__Repository.findOne({
+            where: { id: __sourceCamel__Id } as any,
+            relations: ['__targetCamel__s'],
+        });
+        if (!__sourceCamel__) {
+            throw new BusinessLogicException(`__SourceEntity__ with ID ${__sourceCamel__Id} not found`, BusinessError.NOT_FOUND);
+        }
+
+        __sourceCamel__.__targetCamel__s = __sourceCamel__.__targetCamel__s.filter(t => t.id !== __targetCamel__Id);
+        await this.__sourceCamel__Repository.save(__sourceCamel__);
+
+        this.logger.log(`✅ __TargetEntity__ ${__targetCamel__Id} removed from __SourceEntity__ ${__sourceCamel__Id}`);
+        await this.invalidateCache(__sourceCamel__Id);
+    }
+
+    private async invalidateCache(__sourceCamel__Id: number) {
+        await this.cacheService.delPattern(`__sourceCamel__:${__sourceCamel__Id}:__targetCamel__s:*`);
+    }
+}

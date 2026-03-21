@@ -1,0 +1,41 @@
+steps:
+  # Ejecutamos el comando gcloud compute ssh
+  # Esto evita el manejo manual de llaves privadas aprovechando el IAM de Google Cloud.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Configuración
+        INSTANCE_NAME="tu-instancia-vm"
+        ZONE="us-central1-a"
+        PROJECT_ID=$PROJECT_ID  # GCP expone esta variable automáticamente en Cloud Build
+        
+        # Script que correrá dentro de la VM
+        DEPLOY_SCRIPT="
+          cd /Ruta/A/Tu/Proyecto/trucking_app &&
+          git pull origin main &&
+          
+          echo 'Desplegando Backend...' &&
+          cd backend &&
+          pnpm install --frozen-lockfile &&
+          pnpm build &&
+          pm2 restart backend-api || pm2 start dist/main.js --name backend-api &&
+          
+          echo 'Desplegando Frontend...' &&
+          cd ../frontend &&
+          pnpm install --frozen-lockfile &&
+          pnpm run build &&
+          pm2 restart frontend-web || pm2 start dist/server.js --name frontend-web
+        "
+
+        # Conectar a la VM e inyectar el script
+        # La bandera --tunnel-through-iap es excelente si tu VM no tiene IP Pública
+        gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT_ID" --command "$DEPLOY_SCRIPT"
+
+# Opciones recomendadas
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Incrementar timeout si el build de Next.js demora mucho
+timeout: '1200s'

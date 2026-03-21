@@ -1,0 +1,122 @@
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import Cookies from 'js-cookie';
+
+/**
+ * Cliente Axios personalizado y pre-configurado.
+ */
+export const axiosInstance: AxiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+});
+
+/**
+ * Interceptor para añadir token de autenticación.
+ */
+axiosInstance.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = Cookies.get('auth_token') || localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token as string);
+    }
+  });
+  failedQueue = [];
+};
+
+/**
+ * Interceptor para manejar errores globales y Refresh Token.
+ */
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/identity/auth/refresh') {
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = Cookies.get('refresh_token') || localStorage.getItem('refresh_token');
+
+      if (!refreshToken) {
+        // Redirigir a login o emitir evento de salir
+        return Promise.reject(error);
+      }
+
+      try {
+        const refreshUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/identity/auth/refresh`;
+        const { data } = await axios.post(refreshUrl, { refresh_token: refreshToken });
+
+        const newAccessToken = data.accessToken;
+        const newRefreshToken = data.refreshToken;
+
+        // Guardar nuevos tokens
+        Cookies.set('auth_token', newAccessToken, { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+        Cookies.set('refresh_token', newRefreshToken, { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+        localStorage.setItem('auth_token', newAccessToken);
+        localStorage.setItem('refresh_token', newRefreshToken);
+
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        processQueue(null, newAccessToken);
+        return axiosInstance(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        // Podríamos limpiar tokens y redirigir a login
+        Cookies.remove('auth_token');
+        Cookies.remove('refresh_token');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        if (typeof window !== 'undefined') {
+          const publicRoutes = ['/', '/login', '/register'];
+          if (!publicRoutes.includes(window.location.pathname)) {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Función wrapper para Orval que utiliza nuestra instancia de Axios.
+ * Esto permite a Orval inyectar automáticamente la instancia configurada.
+ */
+export const customInstance = <T>(
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig
+): Promise<T> => {
+  return axiosInstance({
+    ...config,
+    ...options,
+  }).then(({ data }) => data);
+};

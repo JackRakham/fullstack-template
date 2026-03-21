@@ -1,0 +1,7 @@
+{
+  "name": "trucking-monorepo",
+  "private": true,
+  "scripts": {
+    "sync-types": "cd backend && pnpm extract-schema && cd ../frontend && bun run generate-types"
+  }
+}

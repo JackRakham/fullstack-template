@@ -1,0 +1,28 @@
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
+import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
+
+export const Create__EntityName__Schema = z.object({
+// __ZOD_CREATE_FIELDS__
+});
+
+export class Create__EntityName__Dto extends createZodDto(Create__EntityName__Schema) {}
+
+export class Update__EntityName__Dto extends createZodDto(Create__EntityName__Schema.partial()) {}
+
+export class __EntityName__ResponseDto {
+    @ApiProperty()
+    @Expose()
+    id: number;
+
+    // __RESPONSE_FIELDS__
+
+    @ApiProperty()
+    @Expose()
+    created_at: Date;
+
+    @ApiProperty()
+    @Expose()
+    updated_at: Date;
+}

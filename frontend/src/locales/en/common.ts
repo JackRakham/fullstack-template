@@ -1,0 +1,16 @@
+export default {
+  save: 'Save',
+  cancel: 'Cancel',
+  edit: 'Edit',
+  add: 'Add',
+  actions: 'Actions',
+  id: 'ID',
+  welcome: 'Welcome to Trucking App',
+  dashboardDescription: 'Manage your logistics and fleet efficiently with our modular platform.',
+  goToDashboard: 'Go to Dashboard',
+  login: 'Login',
+  email: 'Email',
+  password: 'Password',
+  signIn: 'Sign In',
+  invalidCredentials: 'Invalid email or password',
+};

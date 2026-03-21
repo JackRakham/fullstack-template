@@ -1,0 +1,4 @@
+export const FIREBASE_ADMIN = 'FIREBASE_ADMIN';
+export const AWS_CLIENT = 'AWS_CLIENT';
+export const GCP_CLIENT = 'GCP_CLIENT';
+export const SENDGRID_CLIENT = 'SENDGRID_CLIENT';

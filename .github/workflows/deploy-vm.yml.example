@@ -1,0 +1,45 @@
+name: Deploy to GCP VM via SSH
+
+on:
+  push:
+    branches:
+      - main  # Cambia esto si tu rama principal tiene otro nombre
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Opcional: define un puerto si no es el 22
+          # port: ${{ secrets.PORT }}
+          script: |
+            # 1. Moverse al directorio del proyecto
+            cd /Ruta/A/Tu/Proyecto/trucking_app
+
+            # 2. Traer los últimos cambios
+            git pull origin main
+
+            # 3. Construir y reiniciar Backend
+            echo "Desplegando Backend..."
+            cd backend
+            pnpm install --frozen-lockfile
+            pnpm build
+            pm2 restart backend-api || pm2 start dist/main.js --name "backend-api"
+
+            # 4. Construir y reiniciar Frontend
+            echo "Desplegando Frontend..."
+            cd ../frontend
+            pnpm install --frozen-lockfile
+            pnpm run build
+            pm2 restart frontend-web || pm2 start dist/server.js --name "frontend-web"  # Asumiendo un build standalone de Next.js
+
+            echo "¡Despliegue completado!"

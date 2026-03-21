@@ -1,0 +1,53 @@
+import { Controller, Get, Post, Body, Param, Delete, Query, ParseIntPipe, HttpCode } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiExtraModels } from '@nestjs/swagger';
+import { __Source____Target__sService } from './__sourceKebab__-__targetKebab__s.service';
+import { Associate__Target__sDto } from '../../dtos/__sourceKebab__-__targetKebab__.dto';
+import { PaginationDto, PaginatedResponseDto } from 'src/shared/dtos/pagination.dto';
+import { __Target__ResponseDto } from '../../dtos/__target-dto-filename__';
+
+@ApiTags('__ApiTag__')
+@ApiExtraModels(PaginationDto)
+@Controller('__sourceKebab__s')
+export class __Source____Target__sController {
+    constructor(private readonly service: __Source____Target__sService) {}
+
+    @Post(':__sourceCamel__Id/__targetKebab__s/:__targetCamel__Id')
+    @HttpCode(204)
+    @ApiOperation({ summary: 'Add a __targetCamel__ to a __sourceCamel__' })
+    add__Target__To__Source__(
+        @Param('__sourceCamel__Id', ParseIntPipe) __sourceCamel__Id: number,
+        @Param('__targetCamel__Id', ParseIntPipe) __targetCamel__Id: number,
+    ) {
+        return this.service.add__Target__To__Source__(__sourceCamel__Id, __targetCamel__Id);
+    }
+
+    @Get(':__sourceCamel__Id/__targetKebab__s')
+    @ApiOperation({ summary: 'Get all __targetCamel__s for a __sourceCamel__' })
+    @ApiResponse({ status: 200, description: 'Return paginated __targetCamel__s', type: [__Target__ResponseDto] })
+    find__Target__sBy__Source__Id(
+        @Param('__sourceCamel__Id', ParseIntPipe) __sourceCamel__Id: number,
+        @Query() pagination: PaginationDto,
+    ): Promise<PaginatedResponseDto<__Target__ResponseDto>> {
+        return this.service.find__Target__sBy__Source__Id(__sourceCamel__Id, pagination);
+    }
+
+    @Post(':__sourceCamel__Id/__targetKebab__s')
+    @HttpCode(204)
+    @ApiOperation({ summary: 'Replace all __targetCamel__s for a __sourceCamel__' })
+    associate__Target__sTo__Source__(
+        @Param('__sourceCamel__Id', ParseIntPipe) __sourceCamel__Id: number,
+        @Body() dto: Associate__Target__sDto,
+    ) {
+        return this.service.associate__Target__sTo__Source__(__sourceCamel__Id, dto.__targetCamel__Ids);
+    }
+
+    @Delete(':__sourceCamel__Id/__targetKebab__s/:__targetCamel__Id')
+    @HttpCode(204)
+    @ApiOperation({ summary: 'Remove a __targetCamel__ from a __sourceCamel__' })
+    remove__Target__From__Source__(
+        @Param('__sourceCamel__Id', ParseIntPipe) __sourceCamel__Id: number,
+        @Param('__targetCamel__Id', ParseIntPipe) __targetCamel__Id: number,
+    ) {
+        return this.service.remove__Target__From__Source__(__sourceCamel__Id, __targetCamel__Id);
+    }
+}
