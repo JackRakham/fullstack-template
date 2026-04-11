@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
           port: configService.get<number>('redis.port'),
           password: configService.get<string>('redis.password'),
           maxRetriesPerRequest: null,
-          enableOfflineQueue: false,
+          enableOfflineQueue: true,
         },
       }),
       inject: [ConfigService],

@@ -13,6 +13,11 @@ export enum ConfigKey {
 
   // Mailer
   MAILER_PROVIDER = 'mailer.provider',
+  SMTP_HOST = 'mailer.smtp.host',
+  SMTP_PORT = 'mailer.smtp.port',
+  SMTP_SECURE = 'mailer.smtp.secure',
+  SMTP_USER = 'mailer.smtp.user',
+  SMTP_PASS = 'mailer.smtp.pass',
 
   // Redis
   REDIS_HOST = 'redis.host',
@@ -27,4 +32,8 @@ export enum ConfigKey {
   // JWT
   JWT_SECRET = 'jwt.secret',
   JWT_EXPIRES_IN = 'jwt.expiresIn',
+
+  // AI (OpenRouter)
+  OPENROUTER_API_KEY = 'ai.apiKey',
+  OPENROUTER_MODEL = 'ai.model',
 }

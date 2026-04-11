@@ -8,36 +8,60 @@ import { MediaEntity } from './entities/media.entity';
 import { StorageService } from './storage.service';
 import { StorageController } from './storage.controller';
 import { ConfigKey } from 'src/config/config.keys';
+import { MediaStorageTypeEnum } from 'src/shared/models/enums/media-storage-type.enum';
 
-import { STORAGE_SERVICE } from './storage.constants';
+import { STORAGE_SERVICE, STORAGE_PROVIDER_REGISTRY } from './storage.constants';
 
-const storageProviderFactory = {
+const storageProviders = [
+  LocalStorageProvider,
+  S3StorageProvider,
+  GcpStorageProvider,
+];
+
+const storageProviderRegistryFactory = {
+  provide: STORAGE_PROVIDER_REGISTRY,
+  useFactory: (
+    local: LocalStorageProvider,
+    s3: S3StorageProvider,
+    gcp: GcpStorageProvider,
+  ) => {
+    return {
+      [MediaStorageTypeEnum.LOCAL]: local,
+      [MediaStorageTypeEnum.S3]: s3,
+      [MediaStorageTypeEnum.GCS]: gcp,
+    };
+  },
+  inject: [LocalStorageProvider, S3StorageProvider, GcpStorageProvider],
+};
+
+const activeStorageProviderFactory = {
   provide: STORAGE_SERVICE,
-  useFactory: (configService: ConfigService) => {
-    const providerType = configService.get<string>(ConfigKey.STORAGE_PROVIDER);
+  useFactory: (configService: ConfigService, registry: any) => {
+    const providerType = configService.get<string>(ConfigKey.STORAGE_PROVIDER) || 'local';
     const logger = new Logger('StorageModule');
 
-    switch (providerType) {
-      case 's3':
-        logger.log('Selecting S3 Storage Provider');
-        return new S3StorageProvider();
-      case 'gcs':
-        logger.log('Selecting GCP Storage Provider');
-        return new GcpStorageProvider();
-      case 'local':
-      default:
-        logger.log('Selecting Local Storage Provider');
-        return new LocalStorageProvider();
+    const provider = registry[providerType];
+    if (!provider) {
+      logger.warn(`Provider type "${providerType}" not found in registry. Falling back to local.`);
+      return registry[MediaStorageTypeEnum.LOCAL];
     }
+
+    logger.log(`Active Storage Provider: ${providerType}`);
+    return provider;
   },
-  inject: [ConfigService],
+  inject: [ConfigService, STORAGE_PROVIDER_REGISTRY],
 };
 
 @Global()
 @Module({
   imports: [ConfigModule, TypeOrmModule.forFeature([MediaEntity])],
-  providers: [storageProviderFactory, StorageService],
+  providers: [
+    ...storageProviders,
+    storageProviderRegistryFactory,
+    activeStorageProviderFactory,
+    StorageService,
+  ],
   controllers: [StorageController],
-  exports: [STORAGE_SERVICE, StorageService, TypeOrmModule], // Export the token and service
+  exports: [STORAGE_SERVICE, STORAGE_PROVIDER_REGISTRY, StorageService, TypeOrmModule],
 })
 export class StorageModule {}

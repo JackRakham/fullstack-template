@@ -14,8 +14,15 @@ export interface IStorageProvider {
   deleteFile(fileUrl: string): Promise<void>;
 
   /**
-   * Retrieves the public URL for a given file path
+   * Retrieves the generic static public URL for a given file path
    * @param path The identifying path of the file
    */
   getFileUrl(path: string): string;
+
+  /**
+   * Generates a temporary, publicly accessible URL for a given file
+   * @param path The identifying path of the file
+   * @param expiresInSeconds Duration in seconds until the URL expires
+   */
+  generatePresignedUrl(path: string, expiresInSeconds: number): Promise<string> | string;
 }

@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   ColumnDef,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -25,6 +26,7 @@ interface DataTableProps<TData, TValue> {
   pageCount: number
   onPaginationChange?: (pageIndex: number, pageSize: number) => void
   isLoading?: boolean
+  columnVisibility?: VisibilityState
 }
 
 export function DataTable<TData, TValue>({
@@ -32,7 +34,8 @@ export function DataTable<TData, TValue>({
   data,
   pageCount,
   onPaginationChange,
-  isLoading
+  isLoading,
+  columnVisibility
 }: DataTableProps<TData, TValue>) {
 
   const [{ pageIndex, pageSize }, setPagination] = React.useState({
@@ -54,6 +57,7 @@ export function DataTable<TData, TValue>({
     pageCount,
     state: {
       pagination,
+      columnVisibility: columnVisibility || {},
     },
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),

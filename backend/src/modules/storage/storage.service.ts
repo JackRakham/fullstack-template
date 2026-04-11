@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MediaEntity } from './entities/media.entity';
 import { IStorageProvider } from './interfaces/storage-provider.interface';
-import { STORAGE_SERVICE } from './storage.constants';
+import { STORAGE_SERVICE, STORAGE_PROVIDER_REGISTRY } from './storage.constants';
 import { MediaStorageTypeEnum } from 'src/shared/models/enums/media-storage-type.enum';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config.keys';
+import * as path from 'path';
 
 @Injectable()
 export class StorageService {
@@ -16,19 +17,40 @@ export class StorageService {
     @Inject(STORAGE_SERVICE)
     private readonly storageProvider: IStorageProvider,
 
+    @Inject(STORAGE_PROVIDER_REGISTRY)
+    private readonly providerRegistry: Record<string, IStorageProvider>,
+
     @InjectRepository(MediaEntity)
     private readonly mediaRepository: Repository<MediaEntity>,
 
     private readonly configService: ConfigService,
   ) {}
 
+  private getProviderForMedia(media: MediaEntity): IStorageProvider {
+    const provider = this.providerRegistry[media.storage_type];
+    if (!provider) {
+      this.logger.error(`No provider found for storage type: ${media.storage_type}`);
+      // Fallback to active provider if possible, but this is a state error
+      return this.storageProvider;
+    }
+    return provider;
+  }
+
   async uploadFile(file: Express.Multer.File, title?: string, customPath?: string): Promise<MediaEntity> {
     const uploadedPath = await this.storageProvider.uploadFile(file, customPath);
-    const providerType = this.configService.get<string>(ConfigKey.STORAGE_PROVIDER);
+    const providerType = this.configService.get<string>(ConfigKey.STORAGE_PROVIDER) || 'local';
 
-    const storageType = providerType === 's3' ? MediaStorageTypeEnum.S3 
-                      : providerType === 'gcs' ? MediaStorageTypeEnum.GCS 
-                      : MediaStorageTypeEnum.LOCAL;
+    let storageType = MediaStorageTypeEnum.LOCAL;
+    switch (providerType) {
+      case 's3':
+        storageType = MediaStorageTypeEnum.S3;
+        break;
+      case 'gcs':
+        storageType = MediaStorageTypeEnum.GCS;
+        break;
+      default:
+        storageType = MediaStorageTypeEnum.LOCAL;
+    }
 
     const media = this.mediaRepository.create({
       title: title || file.originalname,
@@ -74,17 +96,41 @@ export class StorageService {
       return media.path; // Redirect directly to the external link
     }
 
-    const serveUrl = this.storageProvider.getFileUrl(media.path);
-    this.logger.debug(`Generated serve URL for media [${media.id}] via active provider`);
+    const provider = this.getProviderForMedia(media);
+    const serveUrl = provider.getFileUrl(media.path);
+    this.logger.debug(`Generated serve URL for media [${media.id}] via ${media.storage_type} provider`);
     return serveUrl;
+  }
+
+  async generatePresignedUrl(id: number, expiresInSeconds: number = 3600): Promise<string> {
+    const media = await this.getMedia(id);
+
+    if (media.storage_type === MediaStorageTypeEnum.EXTERNAL) {
+      this.logger.debug(`Serving external URL directly for media [${media.id}] presign`);
+      return media.path;
+    }
+
+    const provider = this.getProviderForMedia(media);
+    const url = await provider.generatePresignedUrl(media.path, expiresInSeconds);
+    this.logger.debug(`Generated presigned URL for media [${media.id}] via ${media.storage_type} provider`);
+    return url;
+  }
+
+  async resolveFilePath(media: MediaEntity): Promise<string> {
+    if (media.storage_type === MediaStorageTypeEnum.LOCAL) {
+      return path.join(process.cwd(), 'uploads', media.path);
+    }
+
+    throw new Error(`Resolving physical path for storage type ${media.storage_type} is not implemented yet`);
   }
 
   async deleteMedia(id: number): Promise<void> {
     const media = await this.getMedia(id);
 
     if (media.storage_type !== MediaStorageTypeEnum.EXTERNAL) {
-      this.logger.log(`Invoking provider delete for physical file: ${media.path} (Media ID: ${id})`);
-      await this.storageProvider.deleteFile(media.path);
+      this.logger.log(`Invoking provider delete for physical file: ${media.path} (Media ID: ${id}, Type: ${media.storage_type})`);
+      const provider = this.getProviderForMedia(media);
+      await provider.deleteFile(media.path);
     } else {
       this.logger.log(`Media [${id}] is EXTERNAL; skipping provider file deletion`);
     }

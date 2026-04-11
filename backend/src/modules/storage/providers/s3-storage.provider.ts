@@ -21,4 +21,8 @@ export class S3StorageProvider implements IStorageProvider {
   getFileUrl(path: string): string {
     throw new NotImplementedException('S3 get URL not implemented yet');
   }
+
+  generatePresignedUrl(path: string, expiresInSeconds: number): Promise<string> | string {
+    throw new NotImplementedException('S3 presigned URL not implemented yet');
+  }
 }

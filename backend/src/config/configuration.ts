@@ -28,7 +28,14 @@ export default () => ({
     provider: process.env.STORAGE_PROVIDER || 'local',
   },
   mailer: {
-    provider: process.env.MAILER_PROVIDER || 'local', // 'local' | 'sendgrid' | 'ses'
+    provider: process.env.MAILER_PROVIDER || 'local', // 'local' | 'smtp' | 'sendgrid' | 'ses'
+    smtp: {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT, 10) || 465,
+      secure: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) === 465 : true,
+      user: process.env.SMTP_USER || process.env.USER_EMAIL,
+      pass: process.env.SMTP_PASS || process.env.PASSWORD,
+    }
   },
   integrations: {
     firebase: {
@@ -48,6 +55,10 @@ export default () => ({
     sendgrid: {
       apiKey: process.env.SENDGRID_API_KEY,
     },
+  },
+  ai: {
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    model: process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001',
   },
   // Add other critical configurations here
 });

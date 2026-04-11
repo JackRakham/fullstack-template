@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   // Lista de rutas que requieren autenticación
-  const protectedRoutes = ['/dashboard', '/admin', '/settings'];
+  const protectedRoutes = ['/dashboard', '/admin', '/settings', '/dev', '/portal'];
   // Lista de rutas públicas donde no debería estar un usuario logueado
   const publicOnlyRoutes = ['/login', '/register'];
 

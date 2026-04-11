@@ -1,9 +1,10 @@
 import { Auditable } from "src/modules/audit/decorators/auditable.decorator";
 import { UserNotificationEntity } from "src/modules/notification/user-notifications/user-notification.entity";
 import { BaseEntity } from "src/shared/models/base-entity";
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn, ManyToMany, JoinTable } from "typeorm";
 import { MediaEntity } from "src/modules/storage/entities/media.entity";
 import { UserType } from "src/shared/models/enums/user-type.enum";
+import { RoleEntity } from "../roles/role.entity";
 
 @Auditable()
 @Entity('users')
@@ -40,4 +41,12 @@ export class UserEntity extends BaseEntity {
         select: false,
     })
     user_type: UserType;
+
+    @ManyToMany(() => RoleEntity, (role) => role.users)
+    @JoinTable({
+        name: 'user_roles',
+        joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    })
+    roles: RoleEntity[];
 }

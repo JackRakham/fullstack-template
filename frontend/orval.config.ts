@@ -5,7 +5,7 @@ export default defineConfig({
     input: {
       target: '../schema/openapi.json',
       filters: {
-        tags: ['Identity', 'Roles', 'Permissions', 'Role Permissions', 'Permission Roles', 'Identity Authentication'],
+        tags: ['Identity', 'Roles', 'Permissions', 'Role Permissions', 'Permission Roles', 'Identity Authentication', 'User-Roles', 'Role-Users'],
       },
     },
     output: {
@@ -13,7 +13,7 @@ export default defineConfig({
       target: './src/api/generated/identity/endpoints.ts',
       schemas: './src/api/generated/identity/models',
       indexFiles: true,
-      client: 'axios-functions',
+      client: 'react-query',
       override: {
         mutator: {
           path: './src/api-client.ts',
@@ -47,7 +47,7 @@ export default defineConfig({
       target: './src/api/generated/notifications/endpoints.ts',
       schemas: './src/api/generated/notifications/models',
       indexFiles: true,
-      client: 'axios-functions',
+      client: 'react-query',
       override: {
         mutator: {
           path: './src/api-client.ts',
@@ -81,7 +81,7 @@ export default defineConfig({
       target: './src/api/generated/app/endpoints.ts',
       schemas: './src/api/generated/app/models',
       indexFiles: true,
-      client: 'axios-functions',
+      client: 'react-query',
       override: {
         mutator: {
           path: './src/api-client.ts',
@@ -102,7 +102,7 @@ export default defineConfig({
       target: './src/api/generated/storage/endpoints.ts',
       schemas: './src/api/generated/storage/models',
       indexFiles: true,
-      client: 'axios-functions',
+      client: 'react-query',
       override: {
         mutator: {
           path: './src/api-client.ts',

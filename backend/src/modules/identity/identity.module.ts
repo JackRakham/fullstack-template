@@ -7,7 +7,21 @@ import { PermissionRolesModule } from './relationships/permission-roles/permissi
 import { AuthModule } from './auth/auth.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 
+import { UserRolesModule } from './relationships/user-roles/user-roles.module';
+import { RoleUsersModule } from './relationships/role-users/role-users.module';
+
 @Module({
-  imports: [UsersModule, RolesModule, PermissionsModule, RolePermissionsModule, PermissionRolesModule, AuthModule, IntegrationsModule]
+  imports: [
+    UsersModule,
+    RolesModule,
+    PermissionsModule,
+    RolePermissionsModule,
+    PermissionRolesModule,
+    UserRolesModule,
+    RoleUsersModule,
+    AuthModule,
+    IntegrationsModule
+  ]
 })
 export class IdentityModule { }
+

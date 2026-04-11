@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { IStorageProvider } from '../interfaces/storage-provider.interface';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { promisify } from 'util';
+import { ConfigService } from '@nestjs/config';
+import { ConfigKey } from 'src/config/config.keys';
 
 const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
@@ -13,7 +16,7 @@ export class LocalStorageProvider implements IStorageProvider {
   private readonly logger = new Logger(LocalStorageProvider.name);
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.ensureUploadDirExists();
   }
 
@@ -52,7 +55,20 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   getFileUrl(filePath: string): string {
-    // Assuming you have a static assets middleware serving the '/uploads' folder
+    // Legacy generic route that may or may not be protected by auth middleware natively
     return `/uploads/${filePath}`;
+  }
+
+  generatePresignedUrl(filePath: string, expiresInSeconds: number): string {
+    const expires = Date.now() + expiresInSeconds * 1000;
+    const secret = this.configService.get<string>(ConfigKey.JWT_SECRET) || 'fallback_secret';
+    
+    // HMAC signature of the file path combined with the expiry time
+    const signature = crypto.createHmac('sha256', secret)
+      .update(`${filePath}:${expires}`)
+      .digest('hex');
+
+    // Return the relative local path so the frontend resolves it accurately
+    return `/storage/public?path=${encodeURIComponent(filePath)}&expires=${expires}&signature=${signature}`;
   }
 }

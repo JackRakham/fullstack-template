@@ -21,4 +21,8 @@ export class GcpStorageProvider implements IStorageProvider {
   getFileUrl(path: string): string {
     throw new NotImplementedException('GCP get URL not implemented yet');
   }
+
+  generatePresignedUrl(path: string, expiresInSeconds: number): Promise<string> | string {
+    throw new NotImplementedException('GCP presigned URL not implemented yet');
+  }
 }

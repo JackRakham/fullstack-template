@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/shared/models/base-entity";
 import { Column, Entity, ManyToMany } from "typeorm";
 import { PermissionEntity } from "../permissions/permission.entity";
+import { UserEntity } from "../users/user.entity";
 
 @Entity('roles')
 export class RoleEntity extends BaseEntity {
@@ -12,4 +13,7 @@ export class RoleEntity extends BaseEntity {
 
     @ManyToMany(() => PermissionEntity, permission => permission.roles)
     permissions: PermissionEntity[];
+
+    @ManyToMany(() => UserEntity, user => user.roles)
+    users: UserEntity[];
 }

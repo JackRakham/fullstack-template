@@ -20,6 +20,8 @@ import { TruckingModule } from './modules/trucking/trucking.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { AiModule } from './modules/integrations/ai/ai.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -76,6 +78,8 @@ import { MetricsModule } from './modules/metrics/metrics.module';
     AuditModule,
     HealthModule,
     MetricsModule,
+    AiModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
