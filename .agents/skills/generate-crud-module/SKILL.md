@@ -9,9 +9,11 @@ This repository is designed as a template and relies heavily on standardized pat
 
 ## Prerequisites
 
-1. **Create the Entity**: Before running the script, you MUST create your TypeORM Entity class.
+1. **Create the Entity**: Before running the script, you MUST create your TypeORM Entity class. 
+   - ⚠️ **CRITICAL RULE**: NEVER create an Entity without its corresponding CRUD module. Every entity needs its Controller and Service representation.
+   - ⚠️ **CRITICAL RULE**: DO NOT nest an entity inside another CRUD module's folder (e.g., `src/modules/billing/invoices/items/item.entity.ts`). Entities must ALWAYS be placed at the root level of their functional domain (e.g., `src/modules/billing/items/item.entity.ts`).
 2. **Follow naming conventions**: The entity must end with `Entity` (e.g., `export class TruckEntity`).
-3. **Module Structure**: Place your entity inside its corresponding feature folder within a module (e.g., `src/modules/fleet/trucks/truck.entity.ts`).
+3. **Module Structure**: Place your entity inside its corresponding feature folder within a module (e.g., `src/modules/fleet/trucks/truck.entity.ts`). Be sure to manually create empty `[entity]s.service.ts` and `[entity]s.controller.ts` files if the generator script requires them to exist before populating.
 
 ## How to Run the Generator
 

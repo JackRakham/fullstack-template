@@ -58,3 +58,31 @@ export class MyFeatureService {
   }
 }
 ```
+
+## 5. Integraciones Híbridas (Fallbacks)
+A veces, un servicio (como SMTP) no tiene configuradas variables propias específicas (como `SMTP_USER`), pero el sistema puede tener "llaves de ambiente genéricas" asignadas por la infraestructura en tiempo de ejecución (como el campo `USER_EMAIL` en plataformas PaaS).
+
+**NUNCA dejes la lógica de "fallback" de `process.env` dentro de las clases de servicio ni los proveedores.** 
+
+Reúne toda la resolución de dependencias del sistema en el archivo principal `configuration.ts` para que la capa de inyección de dependencia no sea consciente de la hibridación:
+
+```typescript
+// ✅ CORRECTO (configuration.ts) - La resolución de fallback se queda aquí:
+export default () => ({
+  mailer: {
+    smtp: {
+      user: process.env.SMTP_USER || process.env.USER_EMAIL || 'default_user',
+      pass: process.env.SMTP_PASS || process.env.PASSWORD || 'default_password',
+    }
+  }
+});
+```
+
+Mientras tanto, en el constructor del proveedor, el uso permanece ciego a la lógica del entorno:
+
+```typescript
+// ✅ CORRECTO (local-mailer.provider.ts) - Mantiene Inyección de Dependencias pura:
+constructor(private readonly configService: ConfigService) {
+  const mailerUser = this.configService.get<string>(ConfigKey.SMTP_USER);
+}
+```

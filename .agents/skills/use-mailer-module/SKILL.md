@@ -48,3 +48,17 @@ To add a new email template (e.g. `sendInvoiceEmail`), simply add a new method t
 
 ### Local Development
 When `MAILER_PROVIDER=local`, the system automatically uses `LocalMailerProvider` which relies on `nodemailer` and basic SMTP details (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`). It is highly recommended to use a service like **Mailtrap** to safely capture local emails without spamming real addresses.
+
+## Email Infrastructure Notes
+
+The mailer module supports two primary patterns:
+
+### A. Outbound Emails (Notifications, Transactional)
+- **Purpose**: Send transactional emails (welcome, password reset, invoices, notifications).
+- **Authentication**: Uses standard SMTP with an **App Password** or API Key depending on the provider.
+- **Configuration**: Set via `ConfigKey.SMTP_HOST`, `ConfigKey.SMTP_PORT`, `ConfigKey.SMTP_USER`, `ConfigKey.SMTP_PASS`.
+
+### B. Inbound Email Processing (Optional)
+- **Purpose**: If your application needs to scan/process incoming emails (e.g., reading rate confirmations or document submissions).
+- **Authentication**: Typically uses OAuth2 Service Accounts or API-based email access (e.g., Gmail API, Microsoft Graph).
+- **Implementation**: Create a dedicated service/job in the Queue module to periodically fetch and process emails.
